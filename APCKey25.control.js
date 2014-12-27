@@ -40,6 +40,7 @@ var control_note =
 // Just the dimensions of the grid
 var grid_width = 8;
 var grid_height = 5;
+var grid_depth = 1; // number of sends
 
 // An array that maps clip indices to appropriate note values track, scene
 var grid_values = [];
@@ -94,9 +95,6 @@ var grid = [];
 var selected_track_index = 0;
 // Represents the different arrow keys and if they are active or not
 var arrows = [];
-// Index of current send being controlled and the [arbitrary] max send to go to
-var num_sends = 10;
-var send_index = 0;
 
 // Some global Bitwig objects
 var main_track_bank;
@@ -442,18 +440,10 @@ function init()
    host.getMidiInPort(0).setMidiCallback(onMidi);
 
    // Make sure to initialize the globals before initializing the grid and callbacks
-   main_track_bank = host.createMainTrackBank(grid_width, num_sends, grid_height);
+   main_track_bank = host.createMainTrackBank(grid_width, grid_depth, grid_height);
 
    generic = host.getMidiInPort(0).createNoteInput("Akai Key 25", "?1????");
    generic.setShouldConsumeEvents(false);
-
-   // Make CCs 1-119 freely mappable
-   // userControls = host.createUserControlsSection(HIGHEST_CC - LOWEST_CC + 1);
-
-   // for(var i=LOWEST_CC; i<=HIGHEST_CC; i++)
-   // {
-   //    userControls.getControl(i - LOWEST_CC).setLabel("CC" + i);
-   // }
 
    transport = host.createTransportSection();
 
@@ -500,14 +490,19 @@ function changeKnobControlMode(mode)
    if (mode < control_note.volume || mode > control_note.device) return;
    changed = knob_mode != mode;
    if (changed) sendMidi(144, knob_mode, track_button_mode.off);
-   // Iterate the send index if we're dealing with send
+   // Iterate the send since selecting send multiple times in a row iterates sends
    if (mode == control_note.send)
    {
-      if (changed) send_index = 0;
+      if (changed)
+      {
+         // Somehow go back to first send
+      }
       else
       {
-         send_index++;
-         if (send_index >= num_sends) send_index = 0;
+         // Check if we can even scroll up first!
+         printMidi(0, 0, 0);
+         main_track_bank.scrollSendsDown();
+         // Somehow reset if we're past the end
       }
    }
    knob_mode = mode;
@@ -636,10 +631,9 @@ function onMidi(status, data1, data2)
             track.getPan().set(data2, 128);
             break;
          case control_note.send:
-            // It's not certain that this even exists
-            send = track.getSend(send_index);
+            // It's not certain that this even exists so null check
+            send = track.getSend(0);
             if (send) send.set(data2, 128);
-            else printMidi(send_index, track_index, data2);
             break;
          case control_note.device:
             main_track_bank.getTrack(selected_track_index).getPrimaryDevice().getParameter(track_index).set(data2, 128);

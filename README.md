@@ -15,7 +15,7 @@ additional features seen under "Nice to Haves".
 ### Difference With Official Ableton Script:
 
 * Shift + "Stop All Clips" returns to arrangement.
-* In mute mode, the light indicates that the track IS muted (which makes more sense to me).
+* In mute mode, the light indicates that the track _is_ muted (which makes more sense to me).
 * The issues below
 
 ### Issues:
