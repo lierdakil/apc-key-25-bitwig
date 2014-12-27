@@ -95,6 +95,9 @@ var grid = [];
 var selected_track_index = 0;
 // Represents the different arrow keys and if they are active or not
 var arrows = [];
+// Whether it's possible to scroll each way or not
+var can_scroll_sends_up = false; // might not use
+var can_scroll_sends_down = false;
 
 // Some global Bitwig objects
 var main_track_bank;
@@ -435,12 +438,28 @@ function stopAllClips()
    main_track_bank.getClipLauncherScenes().stop();
 }
 
+function onCanScrollSendsUp(can_scroll)
+{
+   printMidi(1, 3, can_scroll);
+   can_scroll_sends_up = can_scroll;
+}
+
+function onCanScrollSendsDown(can_scroll)
+{
+   printMidi(1, 2, can_scroll);
+   can_scroll_sends_down = can_scroll;
+}
+
 function init()
 {
    host.getMidiInPort(0).setMidiCallback(onMidi);
 
    // Make sure to initialize the globals before initializing the grid and callbacks
    main_track_bank = host.createMainTrackBank(grid_width, grid_depth, grid_height);
+
+   // Some global callbacks
+   main_track_bank.addCanScrollSendsUpObserver(onCanScrollSendsUp);
+   main_track_bank.addCanScrollSendsDownObserver(onCanScrollSendsDown);
 
    generic = host.getMidiInPort(0).createNoteInput("Akai Key 25", "?1????");
    generic.setShouldConsumeEvents(false);
